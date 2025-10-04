@@ -1,0 +1,8 @@
+Metric,Value,Description
+MSE,0.8311910033226013,Mean Squared Error - Average squared difference
+RMSE,0.9116967715872428,Root Mean Squared Error - Standard deviation of residuals
+MAE,0.6546915769577026,Mean Absolute Error - Average absolute difference
+MAPE,54.705833435058594,Mean Absolute Percentage Error - Average percentage error
+R2,0.9983439445495605,R-squared - Proportion of variance explained
+Max_Error,7.590492248535156,Maximum Absolute Error - Worst case error
+Median_AE,0.4867074489593506,Median Absolute Error - 50th percentile of errors
