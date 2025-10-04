@@ -187,12 +187,12 @@ if get_analysis:
     try:
         # Get predictions with loading indicators
         with st.spinner("Getting Neural Network prediction..."):
-            nn_response = requests.post("http://localhost:8000/predict/", json=params, timeout=10)
+            nn_response = requests.post("https://blackscholesgit.onrender.com/predict/", json=params, timeout=10)
             nn_response.raise_for_status()
             nn_data = nn_response.json()
         
         with st.spinner("Calculating Black-Scholes and Greeks..."):
-            bs_response = requests.post("http://localhost:8000/predict/greeks", json=params, timeout=10)
+            bs_response = requests.post("https://blackscholesgit.onrender.com/predict/greeks", json=params, timeout=10)
             bs_response.raise_for_status()
             bs_data = bs_response.json()
         
@@ -249,14 +249,14 @@ if get_analysis:
                 sweep_params["S"] = S_sweep
                 
                 try:
-                    nn_resp = requests.post("http://localhost:8000/predict/", json=sweep_params, timeout=5)
+                    nn_resp = requests.post("https://blackscholesgit.onrender.com/predict/", json=sweep_params, timeout=5)
                     nn_resp.raise_for_status()
                     nn_prices.append(nn_resp.json()['option_price'])
                 except:
                     nn_prices.append(None)
                 
                 try:
-                    gr_resp = requests.post("http://localhost:8000/predict/greeks", json=sweep_params, timeout=5)
+                    gr_resp = requests.post("https://blackscholesgit.onrender.com/predict/greeks", json=sweep_params, timeout=5)
                     gr_resp.raise_for_status()
                     g = gr_resp.json()
                     bs_prices.append(g["price"])
@@ -311,7 +311,7 @@ if get_analysis:
     
     except Exception as e:
         st.error(f"❌ Analysis error: {str(e)}")
-        st.info("💡 Make sure your backend server is running on http://localhost:8000")
+        st.info("💡 Backend server is running on https://blackscholesgit.onrender.com")
 
 elif st.session_state.analysis_complete and st.session_state.analysis_data:
     # Display previously generated analysis
