@@ -1,11 +1,52 @@
 import streamlit as st
 import requests
+import time
 from components.visualizations import (
     plot_nn_vs_bs, 
     plot_price_curve, 
     plot_greeks_curve, 
     show_results_table
 )
+
+# Backend URL
+BACKEND_URL = "https://blackscholesgit.onrender.com"
+
+def check_backend_status(url, timeout=10):
+    """Check if backend is responsive"""
+    try:
+        response = requests.get(f"{url}/docs", timeout=timeout)
+        return response.status_code in [200, 404]  # Both indicate server is awake
+    except Exception:
+        return False
+
+def wait_for_backend_ready(url, max_wait_time=120):
+    """Wait for backend to wake up with user feedback"""
+    start_time = time.time()
+    status_placeholder = st.empty()
+    progress_bar = st.progress(0)
+    
+    while (time.time() - start_time) < max_wait_time:
+        if check_backend_status(url, timeout=5):
+            status_placeholder.empty()
+            progress_bar.empty()
+            return True
+        
+        elapsed = time.time() - start_time
+        progress = min(elapsed / max_wait_time, 1.0)
+        progress_bar.progress(progress)
+        
+        status_placeholder.warning(
+            f"⏳ **Backend server is waking up from Render free tier sleep mode**\n\n"
+            f"Please wait up to 2 minutes... ({elapsed:.0f}s elapsed)\n\n"
+            f"This only happens when the app is inactive for a while. "
+            f"Subsequent requests will be instant!"
+        )
+        time.sleep(3)
+    
+    status_placeholder.empty()
+    progress_bar.empty()
+    return False
+
 def display_sensitivity_analysis(data, option_type):
     """Function to display sensitivity analysis results"""
     # Two-column layout for curves
@@ -181,18 +222,34 @@ if get_analysis:
     # Reset analysis state when new analysis is requested
     st.session_state.analysis_complete = False
     
+    # Check backend status first
+    st.markdown('<div class="section-header">🔄 Initializing Backend Connection</div>', unsafe_allow_html=True)
+    
+    backend_ready = wait_for_backend_ready(BACKEND_URL)
+    
+    if not backend_ready:
+        st.error("❌ **Backend server did not respond in time**\n\n"
+                "This can happen when the Render free tier service is cold. "
+                "Please try again in a minute or two.")
+        st.info("💡 **Pro Tip:** The first request after inactivity takes longer. "
+               "Subsequent requests will be instant!")
+        st.stop()
+    
+    # Backend is ready, proceed with analysis
+    st.success("✅ Backend server is ready!")
+    
     # Phase 1: Single Point Analysis
     st.markdown('<div class="section-header">🎯 Single Point Analysis</div>', unsafe_allow_html=True)
     
     try:
         # Get predictions with loading indicators
         with st.spinner("Getting Neural Network prediction..."):
-            nn_response = requests.post("https://blackscholesgit.onrender.com/predict/", json=params, timeout=10)
+            nn_response = requests.post(f"{BACKEND_URL}/predict/", json=params, timeout=30)
             nn_response.raise_for_status()
             nn_data = nn_response.json()
         
         with st.spinner("Calculating Black-Scholes and Greeks..."):
-            bs_response = requests.post("https://blackscholesgit.onrender.com/predict/greeks", json=params, timeout=10)
+            bs_response = requests.post(f"{BACKEND_URL}/predict/greeks", json=params, timeout=30)
             bs_response.raise_for_status()
             bs_data = bs_response.json()
         
@@ -249,14 +306,14 @@ if get_analysis:
                 sweep_params["S"] = S_sweep
                 
                 try:
-                    nn_resp = requests.post("https://blackscholesgit.onrender.com/predict/", json=sweep_params, timeout=5)
+                    nn_resp = requests.post(f"{BACKEND_URL}/predict/", json=sweep_params, timeout=10)
                     nn_resp.raise_for_status()
                     nn_prices.append(nn_resp.json()['option_price'])
                 except:
                     nn_prices.append(None)
                 
                 try:
-                    gr_resp = requests.post("https://blackscholesgit.onrender.com/predict/greeks", json=sweep_params, timeout=5)
+                    gr_resp = requests.post(f"{BACKEND_URL}/predict/greeks", json=sweep_params, timeout=10)
                     gr_resp.raise_for_status()
                     g = gr_resp.json()
                     bs_prices.append(g["price"])
@@ -311,7 +368,7 @@ if get_analysis:
     
     except Exception as e:
         st.error(f"❌ Analysis error: {str(e)}")
-        st.info("💡 Backend server is running on https://blackscholesgit.onrender.com")
+        st.info("💡 If you see timeout errors, the backend might still be waking up. Please try again!")
 
 elif st.session_state.analysis_complete and st.session_state.analysis_data:
     # Display previously generated analysis
@@ -341,48 +398,12 @@ else:
         st.write("- Sensitivity curves") 
         st.write("- Greeks analysis")
         st.write("- Data export")
-
-def display_sensitivity_analysis(data, option_type):
-    """Function to display sensitivity analysis results"""
-    # Two-column layout for curves
-    curve_col1, curve_col2 = st.columns([1, 1])
-    
-    with curve_col1:
-        st.markdown("#### 💰 Price Curves")
-        fig_curve = plot_price_curve(data['S_vals'], data['nn_valid'], data['bs_valid'], option_type, figsize=(7, 5))
-        st.pyplot(fig_curve, use_container_width=True)
-    
-    with curve_col2:
-        st.markdown("#### 📊 Greeks Analysis")
-        # Interactive Greek selector - this will persist now
-        selected_greek = st.selectbox("Select Greek to Display:", 
-                                     ["Delta", "Gamma", "Theta", "Vega", "Rho"],
-                                     key="greek_selector")
         
-        greek_data_map = {
-            "Delta": data['delta_valid'],
-            "Gamma": data['gamma_valid'], 
-            "Theta": data['theta_valid'],
-            "Vega": data['vega_valid'],
-            "Rho": data['rho_valid']
-        }
-        
-        fig_greek = plot_greeks_curve(data['S_vals'], {selected_greek: greek_data_map[selected_greek]}, 
-                                    selected_greek, option_type, figsize=(7, 5))
-        st.pyplot(fig_greek, use_container_width=True)
-    
+    # Backend status indicator
     st.markdown("---")
-    
-    # Phase 3: Comprehensive Data Table
-    st.markdown('<div class="section-header">📋 Comprehensive Results Table</div>', unsafe_allow_html=True)
-    
-    show_results_table({
-        "Stock Price ($)": data['S_vals'], 
-        "NN Price ($)": data['nn_valid'], 
-        "BS Price ($)": data['bs_valid'],
-        "Delta": data['delta_valid'], 
-        "Gamma": data['gamma_valid'], 
-        "Theta": data['theta_valid'],
-        "Vega": data['vega_valid'], 
-        "Rho": data['rho_valid']
-    })
+    if st.button("🔍 Check Backend Status", key="status_check"):
+        with st.spinner("Checking backend status..."):
+            if check_backend_status(BACKEND_URL):
+                st.success("✅ Backend is online and ready!")
+            else:
+                st.warning("⏳ Backend may be sleeping. It will wake up when you run analysis.")
