@@ -159,23 +159,31 @@ curl -X POST "https://blackscholesgit.onrender.com/predict" \
 
 ```text
 project-root/
-├── models/
-│   ├── neural_network.py      # PyTorch NN architectures, normalizers
-│   └── black_scholes.py      # Analytical model, Greeks computation
-├── data/
-│   └── synthetic_data.py     # Synthetic data generation
-├── training/
-│   ├── train.py              # Training script, pipeline
-│   └── evaluate.py           # Evaluation, benchmarking
-├── frontend/
-│   └── streamlit_app.py      # Streamlit UI implementation
 ├── backend/
-│   └── fastapi_app.py        # FastAPI app setup
-├── savedmodels/              # Model checkpoints and artifacts
-├── requirements.txt
-└── README.md                 # Project documentation
+│ ├── routers/
+│ │ ├── predictions.py
+│ ├── init.py
+│ ├── main.py # FastAPI startup
+│ ├── schemas.py # Pydantic models
+├── data/
+│ ├── synthetic_data.py
+├── frontend/
+│ ├── components/
+│ │ ├── input_form.py
+│ │ ├── visualizations.py
+│ ├── init.py
+│ ├── main.py # Streamlit startup
+├── models/
+│ ├── neural_network.py
+│ ├── black_scholes.py
+├── training/
+│ ├── train.py
+│ ├── evaluate.py
+├── README.md
+└── requirements.txt
 ```
 
+text
 ***
 
 ## Advanced Usage & Extensibility
@@ -208,11 +216,3 @@ project-root/
 For questions or contributions, please create issues or pull requests on the [GitHub repo](https://github.com/abhisheksrivastava99/BlackScholesGit/).
 
 ***
-
-This README provides a robust professional summary for your project, fully documenting its intent, implementation, interfaces, model, and practical user instructions. For further polish, add technical diagrams and usage GIFs/screenshots of the deployed apps.
-
-[1](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/91201796/ad13f953-52bf-4dc8-a601-e4e05ccc16b4/neural_network.py)
-[2](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/91201796/087337b6-db29-4f32-9ae2-c7859a6e1a75/train.py)
-[3](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/91201796/433af580-28a0-4420-bdf6-fa102e5c2910/evaluate.py)
-[4](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/91201796/5dd59cfd-9825-4970-8511-3364c4596381/synthetic_data.py)
-[5](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/91201796/d50f38a8-f8cd-4b38-bea0-0d08817c77a4/black_scholes.py)
