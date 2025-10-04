@@ -102,6 +102,18 @@ pip install -r requirements.txt
 
 ## Usage Guide
 
+Backend Live Status Feature
+To enhance user experience, the Streamlit frontend now automatically checks if the backend server (FastAPI API on Render) is online before submitting any pricing requests.
+
+If the backend is inactive (due to free Render tier sleep mode):
+The app displays a message:
+“Backend server is waking up. Please wait a moment...”
+
+Once the backend is live, the UI resumes normal pricing functionality.
+
+Note:
+On free Render tier, backend APIs may be temporarily offline after periods of inactivity. If you see the server wake-up message, just wait a minute as the backend comes online automatically.
+
 ### Streamlit Cloud App
 
 **Try it online:**  
